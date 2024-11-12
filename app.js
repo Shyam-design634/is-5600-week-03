@@ -31,6 +31,25 @@ function respondJson(req, res) {
  * @param {http.IncomingMessage} req
  * @param {http.ServerResponse} res
  */
+function respondEcho(req, res) {
+    const urlObj = new URL(req.url, `http://${req.headers.host}`);
+    const input = urlObj.searchParams.get('input') || '';
+  
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({
+      normal: input,
+      shouty: input.toUpperCase(),
+      charCount: input.length,
+      backwards: input.split('').reverse().join(''),
+    }));
+  }
+  
+  /**
+   * Responds with a 404 not found
+   *
+   * @param {http.IncomingMessage} req
+   * @param {http.ServerResponse} res
+   */
 function respondNotFound(req, res) {
   res.writeHead(404, { 'Content-Type': 'text/plain' });
   res.end('Not Found');
