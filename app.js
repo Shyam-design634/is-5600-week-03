@@ -1,8 +1,10 @@
 const express = require('express');
 const path = require('path');
+const EventEmitter = require('events');
 
 const port = process.env.PORT || 3000;
 const app = express();
+const chatEmitter = new EventEmitter();
 
 // Serve static files from the public directory
 app.use(express.static(__dirname + '/public'));
@@ -22,18 +24,19 @@ app.get('/', chatApp);
 // Array to keep track of connected clients for SSE
 const clients = [];
 
-// /chat endpoint to receive messages and broadcast to clients
-app.get('/chat', (req, res) => {
-  const { message } = req.query;
+function respondChat(req, res) {
+    const { message } = req.query;
   
-  if (message) {
-    // Broadcast message to all connected clients
-    clients.forEach(client => client.write(`data: ${message}\n\n`));
+    // Log received messages for verification
+    console.log("Received message:", message);
+  
+    // Emit a 'message' event
+    chatEmitter.emit('message', message);
+  
+    // End the response
+    res.end();
   }
-  
-  // End the response
-  res.status(204).end();
-});
+
 
 // /sse endpoint to establish SSE connection with clients
 app.get('/sse', (req, res) => {
