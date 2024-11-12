@@ -1,4 +1,3 @@
-// app.js
 const http = require('http');
 const url = require('url');
 
@@ -40,18 +39,17 @@ function respondNotFound(req, res) {
 // Create the server and handle routing
 const server = http.createServer(function (request, response) {
   const parsedUrl = url.parse(request.url, true);
+  const pathname = parsedUrl.pathname;
+
+  console.log("url", pathname);
   
-  if (parsedUrl.pathname === '/text') {
-    respondText(request, response);
-  } else if (parsedUrl.pathname === '/json') {
-    respondJson(request, response);
-  } else {
-    respondNotFound(request, response);
-  }
+  if (pathname === '/') return respondText(request, response);
+  if (pathname === '/json') return respondJson(request, response);
+
+  respondNotFound(request, response);
 });
 
 // Start the server and listen on the specified port
 server.listen(port, function () {
   console.log(`Server is listening on port ${port}`);
 });
-
