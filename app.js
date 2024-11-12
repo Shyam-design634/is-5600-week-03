@@ -4,20 +4,54 @@ const url = require('url');
 
 const port = process.env.PORT || 3000;
 
-// Start server with request and response handling
+/**
+ * Responds with plain text
+ *
+ * @param {http.IncomingMessage} req
+ * @param {http.ServerResponse} res
+ */
+function respondText(req, res) {
+  res.setHeader('Content-Type', 'text/plain');
+  res.end('hi');
+}
+
+/**
+ * Responds with JSON
+ *
+ * @param {http.IncomingMessage} req
+ * @param {http.ServerResponse} res
+ */
+function respondJson(req, res) {
+  res.setHeader('Content-Type', 'application/json');
+  res.end(JSON.stringify({ text: 'hi', numbers: [1, 2, 3] }));
+}
+
+/**
+ * Responds with a 404 not found
+ *
+ * @param {http.IncomingMessage} req
+ * @param {http.ServerResponse} res
+ */
+function respondNotFound(req, res) {
+  res.writeHead(404, { 'Content-Type': 'text/plain' });
+  res.end('Not Found');
+}
+
+// Create the server and handle routing
 const server = http.createServer(function (request, response) {
-    response.setHeader('Content-Type', 'application/json');
+  const parsedUrl = url.parse(request.url, true);
   
-    // Define a JavaScript object to send as JSON
-    const data = {
-      text: 'hi',
-      number: [1, 2, 3]
-    };
-    // Convert the object to a JSON string and send it as the response
-  response.end(JSON.stringify(data));
+  if (parsedUrl.pathname === '/text') {
+    respondText(request, response);
+  } else if (parsedUrl.pathname === '/json') {
+    respondJson(request, response);
+  } else {
+    respondNotFound(request, response);
+  }
 });
 
-// Listen on the specified port
+// Start the server and listen on the specified port
 server.listen(port, function () {
   console.log(`Server is listening on port ${port}`);
 });
+
