@@ -1,74 +1,42 @@
-const http = require('http');
-const url = require('url');
+const express = require('express');
 
 const port = process.env.PORT || 3000;
 
-/**
- * Responds with plain text
- *
- * @param {http.IncomingMessage} req
- * @param {http.ServerResponse} res
- */
+const app = express();
+
+// Function declarations for respondText, respondJson, respondNotFound, and respondEcho
 function respondText(req, res) {
   res.setHeader('Content-Type', 'text/plain');
   res.end('hi');
 }
 
-/**
- * Responds with JSON
- *
- * @param {http.IncomingMessage} req
- * @param {http.ServerResponse} res
- */
 function respondJson(req, res) {
   res.setHeader('Content-Type', 'application/json');
   res.end(JSON.stringify({ text: 'hi', numbers: [1, 2, 3] }));
 }
 
-/**
- * Responds with a 404 not found
- *
- * @param {http.IncomingMessage} req
- * @param {http.ServerResponse} res
- */
 function respondEcho(req, res) {
-    const urlObj = new URL(req.url, `http://${req.headers.host}`);
-    const input = urlObj.searchParams.get('input') || '';
-  
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({
-      normal: input,
-      shouty: input.toUpperCase(),
-      charCount: input.length,
-      backwards: input.split('').reverse().join(''),
-    }));
-  }
-  
-  /**
-   * Responds with a 404 not found
-   *
-   * @param {http.IncomingMessage} req
-   * @param {http.ServerResponse} res
-   */
-function respondNotFound(req, res) {
-  res.writeHead(404, { 'Content-Type': 'text/plain' });
-  res.end('Not Found');
+  const input = req.query.input || '';
+
+  res.setHeader('Content-Type', 'application/json');
+  res.json({
+    normal: input,
+    shouty: input.toUpperCase(),
+    charCount: input.length,
+    backwards: input.split('').reverse().join(''),
+  });
 }
 
-// Create the server and handle routing
-const server = http.createServer(function (request, response) {
-  const parsedUrl = url.parse(request.url, true);
-  const pathname = parsedUrl.pathname;
+function respondNotFound(req, res) {
+  res.status(404).send('Not Found');
+}
 
-  console.log("url", pathname);
-  
-  if (pathname === '/') return respondText(request, response);
-  if (pathname === '/json') return respondJson(request, response);
-
-  respondNotFound(request, response);
-});
+// Define routes using Express
+app.get('/', respondText);
+app.get('/json', respondJson);
+app.get('/echo', respondEcho);
 
 // Start the server and listen on the specified port
-server.listen(port, function () {
-  console.log(`Server is listening on port ${port}`);
+app.listen(port, () => {
+  console.log(`Listening on port ${port}`);
 });
