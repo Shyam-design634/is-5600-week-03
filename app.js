@@ -11,7 +11,6 @@ function respondText(req, res) {
 }
 
 function respondJson(req, res) {
-  // Simplified JSON response using Express's res.json method
   res.json({
     text: 'hi',
     numbers: [1, 2, 3],
@@ -19,7 +18,10 @@ function respondJson(req, res) {
 }
 
 function respondEcho(req, res) {
-  const input = req.query.input || '';
+  // Extract the 'input' query parameter with a default value of an empty string
+  const { input = '' } = req.query;
+
+  // Send the JSON response with various transformations of 'input'
   res.json({
     normal: input,
     shouty: input.toUpperCase(),
