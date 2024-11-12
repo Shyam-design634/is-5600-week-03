@@ -1,45 +1,60 @@
 const express = require('express');
+const path = require('path');
 
 const port = process.env.PORT || 3000;
-
 const app = express();
 
-// Function declarations for respondText, respondJson, respondNotFound, and respondEcho
-function respondText(req, res) {
-  res.setHeader('Content-Type', 'text/plain');
-  res.end('hi');
+// Serve static files from the public directory
+app.use(express.static(__dirname + '/public'));
+
+/**
+ * Serves up the chat.html file
+ * @param {http.IncomingMessage} req
+ * @param {http.ServerResponse} res
+ */
+function chatApp(req, res) {
+  res.sendFile(path.join(__dirname, '/chat.html'));
 }
 
-function respondJson(req, res) {
-  res.json({
-    text: 'hi',
-    numbers: [1, 2, 3],
+// Route for serving chat.html
+app.get('/', chatApp);
+
+// Array to keep track of connected clients for SSE
+const clients = [];
+
+// /chat endpoint to receive messages and broadcast to clients
+app.get('/chat', (req, res) => {
+  const { message } = req.query;
+  
+  if (message) {
+    // Broadcast message to all connected clients
+    clients.forEach(client => client.write(`data: ${message}\n\n`));
+  }
+  
+  // End the response
+  res.status(204).end();
+});
+
+// /sse endpoint to establish SSE connection with clients
+app.get('/sse', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  // Keep connection alive with heartbeat every 15 seconds
+  const keepAlive = setInterval(() => res.write(': keep-alive\n\n'), 15000);
+
+  // Add client to clients array
+  clients.push(res);
+
+  // Remove client on disconnect
+  req.on('close', () => {
+    clearInterval(keepAlive);
+    clients.splice(clients.indexOf(res), 1);
   });
-}
+});
 
-function respondEcho(req, res) {
-  // Extract the 'input' query parameter with a default value of an empty string
-  const { input = '' } = req.query;
-
-  // Send the JSON response with various transformations of 'input'
-  res.json({
-    normal: input,
-    shouty: input.toUpperCase(),
-    charCount: input.length,
-    backwards: input.split('').reverse().join(''),
-  });
-}
-
-function respondNotFound(req, res) {
-  res.status(404).send('Not Found');
-}
-
-// Define routes using Express
-app.get('/', respondText);
-app.get('/json', respondJson);
-app.get('/echo', respondEcho);
-
-// Start the server and listen on the specified port
+// Start the server
 app.listen(port, () => {
   console.log(`Listening on port ${port}`);
 });
