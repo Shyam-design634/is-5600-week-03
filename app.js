@@ -21,8 +21,7 @@ function chatApp(req, res) {
 // Route for serving chat.html
 app.get('/', chatApp);
 
-// Array to keep track of connected clients for SSE
-const clients = [];
+app.get('/chat', respondChat);
 
 function respondChat(req, res) {
     const { message } = req.query;
@@ -38,26 +37,21 @@ function respondChat(req, res) {
   }
 
 
-// /sse endpoint to establish SSE connection with clients
-app.get('/sse', (req, res) => {
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-
-  // Keep connection alive with heartbeat every 15 seconds
-  const keepAlive = setInterval(() => res.write(': keep-alive\n\n'), 15000);
-
-  // Add client to clients array
-  clients.push(res);
-
-  // Remove client on disconnect
-  req.on('close', () => {
-    clearInterval(keepAlive);
-    clients.splice(clients.indexOf(res), 1);
+/function respondSSE(req, res) {
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Connection': 'keep-alive',
+    });
+  
+    const onMessage = (message) => res.write(`data: ${message}\n\n`);
+    chatEmitter.on('message', onMessage);
+  
+    res.on('close', () => {
+      chatEmitter.off('message', onMessage);
+    });
+  }
+  
+  // Start the server
+  app.listen(port, () => {
+    console.log(`Listening on port ${port}`);
   });
-});
-
-// Start the server
-app.listen(port, () => {
-  console.log(`Listening on port ${port}`);
-});
